@@ -1,0 +1,8 @@
+{
+    "name": "co2-monitoring-mysql",
+    "version": "1.0.0",
+    "type": "module",
+    "dependencies": {
+        "mysql2": "^3.11.0"
+    }
+}
