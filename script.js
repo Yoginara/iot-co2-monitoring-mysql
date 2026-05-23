@@ -1,5 +1,5 @@
 // =================================================================
-// LOGIKA UTAMA MONITORING CO2 (SUDAH TERKONEKSI VIA INDEX.HTML)
+// LOGIKA UTAMA MONITORING CO2 (SUDAH TERKONEKSI VIA INDEX.HTML) - VERSION MYSQL VERCEL
 // =================================================================
 
 let data = []; // Menyimpan data real-time dashboard
@@ -116,50 +116,51 @@ function resetGraph() {
   document.getElementById("endTime").value = "";
 }
 
-// === Ambil Data Dashboard (50 Data Terbaru) ===
+// === Ambil Data Dashboard (50 Data Terbaru dari MySQL Vercel) ===
 async function fetchInitialData() {
-  const { data: supabaseData, error } = await supabase
-    .from('co2-monitoring')
-    .select('created_at, co2')
-    .order('created_at', { ascending: true })
-    .limit(50);
+  try {
+    const response = await fetch('/api/ambil'); // Menembak API Vercel Serverless kamu
+    const mysqlData = await response.json();
 
-  if (error) {
-    console.error("Gagal memuat data dashboard:", error);
-    document.getElementById("connectionStatus").textContent = "❌ Status Koneksi: Gagal Terhubung!";
-    document.getElementById("connectionStatus").className = "text-sm text-red-600 mt-1 font-medium";
-  } else if (supabaseData) {
-    document.getElementById("connectionStatus").textContent = "🟢 Status Koneksi: Terhubung ke Supabase Cloud (Live)";
+    if (mysqlData.error) {
+      throw new Error(mysqlData.error);
+    }
+
+    document.getElementById("connectionStatus").textContent = "🟢 Status Koneksi: Terhubung ke MySQL Cloud via Vercel (Polling Active)";
     document.getElementById("connectionStatus").className = "text-sm text-emerald-600 mt-1 font-medium";
 
-    data = supabaseData.map(row => ({ waktu: row.created_at, co2: row.co2 }));
+    data = mysqlData.map(row => ({ waktu: row.created_at, co2: row.co2 }));
     updateChart(data);
     updateStatus();
+
+  } catch (error) {
+    console.error("Gagal memuat data dashboard:", error);
+    document.getElementById("connectionStatus").textContent = "❌ Status Koneksi: Gagal Terhubung ke MySQL Server!";
+    document.getElementById("connectionStatus").className = "text-sm text-red-600 mt-1 font-medium";
   }
 }
 
-// === LOGIKA HALAMAN HISTORIS (FILTER DATABASE SUPABASE) ===
+// === LOGIKA HALAMAN HISTORIS (FILTER DATABASE MYSQL) ===
 document.getElementById("filterForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const startDate = document.getElementById("startDate").value;
   const endDate = document.getElementById("endDate").value;
 
-  const startISO = new Date(startDate).toISOString();
-  const endISO = new Date(new Date(endDate).setHours(23, 59, 59, 999)).toISOString();
+  try {
+    // Menembak ke API ambil dengan membawa parameter query string start dan end tanggal
+    const response = await fetch(`/api/ambil?start=${startDate}&end=${endDate}`);
+    const historisData = await response.json();
 
-  const { data: historisData, error } = await supabase
-    .from('co2-monitoring')
-    .select('created_at, co2')
-    .gte('created_at', startISO)
-    .lte('created_at', endISO)
-    .order('created_at', { ascending: true });
+    if (historisData.error) {
+      throw new Error(historisData.error);
+    }
 
-  if (error) {
-    alert("Gagal memuat data historis!");
-    console.error(error);
-  } else {
     dataHistorisFiltered = historisData.map(row => ({ waktu: row.created_at, co2: row.co2 }));
     renderTable(dataHistorisFiltered);
+
+  } catch (error) {
+    alert("Gagal memuat data historis!");
+    console.error(error);
   }
 });
 
@@ -183,18 +184,13 @@ function downloadCSV() {
   document.body.removeChild(link);
 }
 
-// === Real-Time Listener untuk Dashboard ===
-supabase
-  .channel('perubahan-co2-realtime')
-  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'co2-monitoring' }, payload => {
-    const newData = { waktu: payload.new.created_at, co2: payload.new.co2 };
-    data.push(newData);
-    if (document.getElementById('dashboard').classList.contains('active')) {
-      updateChart(data);
-      updateStatus();
-    }
-  })
-  .subscribe();
+// === KARENA MYSQL TIDAK REALTIME, REALTIME LISTENER DIHAPUS & DIGANTI POLLING INTERVAL ===
+setInterval(function () {
+  // Hanya melakukan request berkala jika user sedang membuka tab halaman dashboard utama
+  if (document.getElementById('dashboard').classList.contains('active')) {
+    fetchInitialData();
+  }
+}, 3000); // Mengecek data baru ke MySQL setiap 3 detik sekali
 
 // === Navigasi Struktur Halaman Konten ===
 function showSection(sectionId) {
@@ -207,5 +203,5 @@ function showSection(sectionId) {
   }
 }
 
-// Jalankan pencarian data awal
+// Jalankan pencarian data awal saat web dibuka
 fetchInitialData();
