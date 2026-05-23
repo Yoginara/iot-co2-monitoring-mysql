@@ -9,7 +9,7 @@ export default async function handler(req, res) {
         host: 'mysql-bce409f-yozy.f.aivencloud.com',
         port: 10252,
         user: 'avnadmin',
-        password: 'AVNS_Qo4DxGJOMwpePdX2PD',
+        password: process.env.MYSQL_PASSWORD, // 👈 WAJIB PAKAI INI, BRO! Jangan diketik teks aslinya
         database: 'defaultdb',
         ssl: { rejectUnauthorized: false }
     };
