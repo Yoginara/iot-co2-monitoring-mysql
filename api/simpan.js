@@ -12,7 +12,10 @@ export default async function handler(req, res) {
         user: 'avnadmin',
         password: 'AVNS_FuPikeHfrugsuGp1-u-', // 👈 Pasword langsung ditanam di sini, bro!
         database: 'defaultdb',
-        ssl: { rejectUnauthorized: false }
+        ssl: {
+            rejectUnauthorized: false,
+            minVersion: 'TLSv1.2' // 🔐 Memaksa penggunaan TLS standar Aiven
+        }
     };
 
     let connection;
