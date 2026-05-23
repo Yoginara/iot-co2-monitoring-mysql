@@ -5,12 +5,12 @@ export default async function handler(req, res) {
         return res.status(405).json({ message: 'Method not allowed' });
     }
 
-    // 1. KONEKSI KE DATABASE AIVEN (Menggunakan Environment Variable)
+    // Koneksi langsung pakai password asli Aiven kamu
     const dbConfig = {
         host: 'mysql-bce409f-yozy.f.aivencloud.com',
         port: 10252,
         user: 'avnadmin',
-        password: process.env.MYSQL_PASSWORD, // 👈 Sudah diganti pakai ini ya, bro! Aman dari intipan GitHub
+        password: 'AVNS_Qo4DxGJOMgwpEpDX2PD', // 👈 Pasword langsung ditanam di sini, bro!
         database: 'defaultdb',
         ssl: { rejectUnauthorized: false }
     };
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
             return res.status(400).json({ message: 'Data CO2 tidak ditemukan' });
         }
 
-        // 🔥 TRIK SMART: Otomatis buatin tabel kalau di database belum ada
+        // Otomatis buat tabel jika belum ada
         await connection.execute(`
       CREATE TABLE IF NOT EXISTS co2_monitoring (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -34,7 +34,7 @@ export default async function handler(req, res) {
       )
     `);
 
-        // 2. MASUKKAN DATA DARI ESP32
+        // Masukkan data sensor
         await connection.execute(
             'INSERT INTO co2_monitoring (co2) VALUES (?)',
             [co2]
