@@ -5,14 +5,14 @@ export default async function handler(req, res) {
         return res.status(405).json({ message: 'Method not allowed' });
     }
 
-    // 1. KONEKSI KE DATA BASE AIVEN (Sesuaikan dengan data di fotomu)
+    // 1. KONEKSI KE DATABASE AIVEN (Menggunakan Environment Variable)
     const dbConfig = {
         host: 'mysql-bce409f-yozy.f.aivencloud.com',
         port: 10252,
         user: 'avnadmin',
-        password: 'AVNS_Qo4DxGJOMgwpEpDX2PD', // <-- Ganti ini bro!
+        password: process.env.MYSQL_PASSWORD, // 👈 Sudah diganti pakai ini ya, bro! Aman dari intipan GitHub
         database: 'defaultdb',
-        ssl: { rejectUnauthorized: false } // Aiven wajib pakai SSL
+        ssl: { rejectUnauthorized: false }
     };
 
     let connection;
